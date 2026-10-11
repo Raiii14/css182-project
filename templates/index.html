@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="refresh" content="15">
+    <title>USGS Earthquake Monitor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='tokens.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <main class="page">
+      <header class="masthead">
+        <div>
+          <h1>Earthquake monitor</h1>
+          <p class="intro">USGS events captured through Kafka, processed by Spark, and stored in Cassandra.</p>
+        </div>
+      </header>
+
+      <section class="summary" aria-label="Stored data summary">
+        <div class="summary-item">
+          <span class="summary-label">Events shown</span>
+          <strong class="summary-value">{{ count }}</strong>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Below magnitude 2.5</span>
+          <strong class="summary-value">{{ low_count }}</strong>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">Magnitude 2.5 and above</span>
+          <strong class="summary-value">{{ high_count }}</strong>
+        </div>
+        <div class="summary-item summary-time">
+          <span class="summary-label">Latest capture stored</span>
+          <strong>{{ latest_capture }}</strong>
+        </div>
+      </section>
+
+      <section class="records" aria-labelledby="records-heading">
+        <div class="section-heading">
+          <div>
+            <h2 id="records-heading">Recent earthquakes</h2>
+          </div>
+          <p>Latest 50 events from today and yesterday, in UTC.</p>
+        </div>
+        {% if error %}
+          <p class="error" role="alert">{{ error }}</p>
+        {% endif %}
+        <div class="table-scroll" tabindex="0" aria-label="Scrollable earthquake records">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Magnitude</th>
+                <th scope="col">Location</th>
+                <th scope="col">Occurred (UTC)</th>
+                <th scope="col">Depth (km)</th>
+                <th scope="col">Stream</th>
+                <th scope="col">Event ID</th>
+                <th scope="col">Last captured (UTC)</th>
+                <th scope="col">USGS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for event in events %}
+                <tr>
+                  <td><span class="magnitude">{{ event.magnitude }}</span></td>
+                  <td class="place">{{ event.place }}</td>
+                  <td>{{ event.occurred_at }}</td>
+                  <td>{{ event.depth_km }}</td>
+                  <td><span class="band">{{ event.band }}</span></td>
+                  <td><code>{{ event.event_id }}</code></td>
+                  <td>{{ event.captured_at }}</td>
+                  <td><a href="{{ event.details_url }}" target="_blank" rel="noopener noreferrer" aria-label="Open USGS page for {{ event.event_id }}">Details</a></td>
+                </tr>
+              {% else %}
+                <tr><td colspan="8" class="empty">No streamed records are stored yet. Start the producers and Spark stream.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <footer>
+        <span>Source: <a href="https://earthquake.usgs.gov/earthquakes/feed/v1.0/geojson.php">USGS GeoJSON feeds</a></span>
+        <span>Page rendered {{ rendered_at }}</span>
+      </footer>
+    </main>
+    <script>
+      const records = document.querySelector('.table-scroll');
+      const scrollKey = 'earthquake-records-scroll';
+      records.scrollTop = Number(sessionStorage.getItem(scrollKey) || 0);
+      records.scrollLeft = Number(sessionStorage.getItem(scrollKey + '-x') || 0);
+      records.addEventListener('scroll', () => {
+        sessionStorage.setItem(scrollKey, String(records.scrollTop));
+        sessionStorage.setItem(scrollKey + '-x', String(records.scrollLeft));
+      }, { passive: true });
+    </script>
+  </body>
+</html>

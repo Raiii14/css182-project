@@ -1,0 +1,25 @@
+# Python bytecode and local environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Local secrets and environment settings
+.env
+.env.*
+!.env.example
+
+# Spark runtime state
+.runtime/
+
+# Test, type-checker, and lint caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local logs and browser automation output
+*.log
+.playwright-cli/
